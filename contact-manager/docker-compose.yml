@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:13
+    container_name: contact-db
+    environment:
+      POSTGRES_USER: noteuser
+      POSTGRES_PASSWORD: notepassword
+      POSTGRES_DB: notedb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U noteuser -d notedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend
+    container_name: contact-api
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: noteuser
+      DB_PASSWORD: notepassword
+      DB_NAME: notedb
+
+volumes:
+  postgres_data:
